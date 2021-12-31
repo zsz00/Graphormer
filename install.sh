@@ -2,13 +2,17 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+conda activate graphormer
 
 # install requirements
-pip install torch==1.9.1+cu111 torchaudio -f https://download.pytorch.org/whl/cu111/torch_stable.html
+pip install torch==1.9.1+cu113 torchaudio -f https://download.pytorch.org/whl/cu113/torch_stable.html
+# 支持 pytorch=1.10.1, cudatoolkit=11.3, pyg=2
+conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch  # 10.1
+conda install pyg -c pyg -c conda-forge
 # install torchaudio, thus fairseq installation will not install newest torchaudio and torch(would replace torch-1.9.1)
 pip install lmdb
-pip install torch-scatter -f https://pytorch-geometric.com/whl/torch-1.9.1+cu111.html
-pip install torch-sparse -f https://pytorch-geometric.com/whl/torch-1.9.1+cu111.html
+pip install torch-scatter -f https://pytorch-geometric.com/whl/torch-1.9.1+cu113.html
+pip install torch-sparse -f https://pytorch-geometric.com/whl/torch-1.9.1+cu113.html
 pip install torch-geometric==1.7.2
 pip install tensorboardX==2.4.1
 pip install ogb==1.3.2

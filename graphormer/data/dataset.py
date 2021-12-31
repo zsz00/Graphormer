@@ -18,9 +18,7 @@ from .ogb_datasets import OGBDatasetLookupTable
 
 
 class BatchedDataDataset(FairseqDataset):
-    def __init__(
-        self, dataset, max_node=128, multi_hop_max_dist=5, spatial_pos_max=1024
-    ):
+    def __init__(self, dataset, max_node=128, multi_hop_max_dist=5, spatial_pos_max=1024):
         super().__init__()
         self.dataset = dataset
         self.max_node = max_node
@@ -61,14 +59,14 @@ class TargetDataset(FairseqDataset):
 
 class GraphormerDataset:
     def __init__(
-        self,
-        dataset: Optional[Union[PYGDataset, DGLDataset]] = None,
-        dataset_spec: Optional[str] = None,
-        dataset_source: Optional[str] = None,
-        seed: int = 0,
-        train_idx = None,
-        valid_idx = None,
-        test_idx = None,
+            self,
+            dataset: Optional[Union[PYGDataset, DGLDataset]] = None,
+            dataset_spec: Optional[str] = None,
+            dataset_source: Optional[str] = None,
+            seed: int = 0,
+            train_idx=None,
+            valid_idx=None,
+            test_idx=None,
     ):
         super().__init__()
         if dataset is not None:

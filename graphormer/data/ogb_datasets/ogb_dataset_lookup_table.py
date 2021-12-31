@@ -10,6 +10,7 @@ from ..pyg_datasets import GraphormerPYGDataset
 import torch.distributed as dist
 import os
 
+
 class MyPygPCQM4Mv2Dataset(PygPCQM4Mv2Dataset):
     def download(self):
         if not dist.is_initialized() or dist.get_rank() == 0:

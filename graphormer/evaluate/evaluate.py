@@ -12,10 +12,11 @@ from sklearn.metrics import roc_auc_score
 import sys
 from os import path
 
-sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from pretrain import load_pretrained_model
 
 import logging
+
 
 def eval(args, use_pretrained, checkpoint_path=None, logger=None):
     cfg = convert_namespace_to_omegaconf(args)
@@ -104,6 +105,7 @@ def eval(args, use_pretrained, checkpoint_path=None, logger=None):
         else:
             raise ValueError(f"Unsupported metric {args.metric}")
 
+
 def main():
     parser = options.get_training_parser()
     parser.add_argument(
@@ -123,7 +125,6 @@ def main():
             checkpoint_path = Path(args.save_dir) / checkpoint_fname
             logger.info(f"evaluating checkpoint file {checkpoint_path}")
             eval(args, False, checkpoint_path, logger)
-
 
 
 if __name__ == '__main__':

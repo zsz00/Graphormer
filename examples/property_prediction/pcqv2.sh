@@ -4,7 +4,7 @@
 
 ulimit -c unlimited
 
-fairseq-train \
+CUDA_VISIBLE_DEVICES=4,5,6,7 fairseq-train \
 --user-dir ../../graphormer \
 --num-workers 16 \
 --ddp-backend=legacy_ddp \

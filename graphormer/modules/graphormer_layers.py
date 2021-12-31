@@ -52,7 +52,7 @@ class GraphNodeFeature(nn.Module):
         )
         n_graph, n_node = x.size()[:2]
 
-        # node feauture + graph token
+        # node feature + graph token
         node_feature = self.atom_encoder(x).sum(dim=-2)  # [n_graph, n_node, n_hidden]
 
         # if self.flag and perturb is not None:

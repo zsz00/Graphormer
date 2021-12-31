@@ -209,10 +209,7 @@ class GraphormerEncoder(FairseqEncoder):
             self.embed_out.reset_parameters()
 
     def forward(self, batched_data, perturb=None, masked_tokens=None, **unused):
-        inner_states, graph_rep = self.graph_encoder(
-            batched_data,
-            perturb=perturb,
-        )
+        inner_states, graph_rep = self.graph_encoder(batched_data, perturb=perturb,)
 
         x = inner_states[-1].transpose(0, 1)
 
@@ -223,9 +220,7 @@ class GraphormerEncoder(FairseqEncoder):
         x = self.layer_norm(self.activation_fn(self.lm_head_transform_weight(x)))
 
         # project back to size of vocabulary
-        if self.share_input_output_embed and hasattr(
-            self.graph_encoder.embed_tokens, "weight"
-        ):
+        if self.share_input_output_embed and hasattr(self.graph_encoder.embed_tokens, "weight"):
             x = F.linear(x, self.graph_encoder.embed_tokens.weight)
         elif self.embed_out is not None:
             x = self.embed_out(x)
