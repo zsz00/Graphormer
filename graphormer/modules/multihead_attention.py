@@ -41,14 +41,10 @@ class MultiheadAttention(nn.Module):
         self.qkv_same_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
-        self.dropout_module = FairseqDropout(
-            dropout, module_name=self.__class__.__name__
-        )
+        self.dropout_module = FairseqDropout(dropout, module_name=self.__class__.__name__)
 
         self.head_dim = embed_dim // num_heads   # 24 = 768 // 32
-        assert (
-                self.head_dim * num_heads == self.embed_dim
-        ), "embed_dim must be divisible by num_heads"
+        assert (self.head_dim * num_heads == self.embed_dim), "embed_dim must be divisible by num_heads"
         self.scaling = self.head_dim ** -0.5
 
         self.self_attention = self_attention
@@ -241,11 +237,8 @@ class MultiheadAttention(nn.Module):
                 if k_bias in state_dict.keys():
                     dim = int(state_dict[k].shape[0] / 3)
                     items_to_add[prefix + "q_proj.bias"] = state_dict[k_bias][:dim]
-                    items_to_add[prefix + "k_proj.bias"] = state_dict[k_bias][
-                                                           dim: 2 * dim
-                                                           ]
+                    items_to_add[prefix + "k_proj.bias"] = state_dict[k_bias][dim: 2 * dim]
                     items_to_add[prefix + "v_proj.bias"] = state_dict[k_bias][2 * dim:]
-
                     keys_to_remove.append(prefix + "in_proj_bias")
 
         for k in keys_to_remove:

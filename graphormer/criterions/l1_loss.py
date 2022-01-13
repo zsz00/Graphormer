@@ -30,7 +30,7 @@ class GraphPredictionL1Loss(FairseqCriterion):
 
         logits = model(**sample["net_input"])
         logits = logits[:, 0, :]
-        targets = model.get_targets(sample, [logits])
+        targets = model.get_targets(sample, [logits])  # gt
 
         loss = nn.L1Loss(reduction="sum")(logits, targets[: logits.size(0)])
 

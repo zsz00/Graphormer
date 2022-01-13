@@ -33,9 +33,7 @@ class GraphPredictionMulticlassCrossEntropy(FairseqCriterion):
         targets = model.get_targets(sample, [logits])[: logits.size(0)]
         ncorrect = (torch.argmax(logits, dim=-1).reshape(-1) == targets.reshape(-1)).sum()
 
-        loss = functional.cross_entropy(
-            logits, targets.reshape(-1), reduction="sum"
-        )
+        loss = functional.cross_entropy(logits, targets.reshape(-1), reduction="sum")
 
         logging_output = {
             "loss": loss.data,

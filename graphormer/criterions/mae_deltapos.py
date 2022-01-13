@@ -43,9 +43,7 @@ class IS2RECriterion(FairseqCriterion):
         )
 
         valid_nodes = sample["net_input"]["atoms"].ne(0).sum()
-        output, node_output, node_target_mask = model(
-            **sample["net_input"],
-        )
+        output, node_output, node_target_mask = model(**sample["net_input"],)
 
         relaxed_energy = sample["targets"]["relaxed_energy"]
         relaxed_energy = relaxed_energy.float()
@@ -57,9 +55,7 @@ class IS2RECriterion(FairseqCriterion):
         loss = loss.sum()
 
         deltapos = sample["targets"]["deltapos"].float()
-        deltapos = (deltapos - deltapos.new_tensor(self.d_mean)) / deltapos.new_tensor(
-            self.d_std
-        )
+        deltapos = (deltapos - deltapos.new_tensor(self.d_mean)) / deltapos.new_tensor(self.d_std)
         deltapos *= node_target_mask
         node_output *= node_target_mask
         target_cnt = node_target_mask.sum(dim=[1, 2])
@@ -93,13 +89,8 @@ class IS2RECriterion(FairseqCriterion):
         mean_loss = (loss_sum / sample_size) * IS2RECriterion.e_std
         energy_within_threshold = energy_within_threshold_sum / sample_size
         mean_node_loss = (node_loss_sum / sample_size) * sum(IS2RECriterion.d_std) / 3.0
-        mean_n_nodes = (
-            sum([log.get("num_nodes", 0) for log in logging_outputs]) / sample_size
-        )
-        node_loss_weight = (
-            sum([log.get("node_loss_weight", 0) for log in logging_outputs])
-            / sample_size
-        )
+        mean_n_nodes = sum([log.get("num_nodes", 0) for log in logging_outputs]) / sample_size
+        node_loss_weight = sum([log.get("node_loss_weight", 0) for log in logging_outputs]) / sample_size
 
         metrics.log_scalar("loss", mean_loss, sample_size, round=6)
         metrics.log_scalar("ewth", energy_within_threshold, sample_size, round=6)

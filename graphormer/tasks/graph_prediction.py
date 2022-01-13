@@ -278,9 +278,7 @@ class GraphPredictionWithFlagTask(GraphPredictionTask):
         self.flag_step_size = cfg.flag_step_size
         self.flag_mag = cfg.flag_mag
 
-    def train_step(
-        self, sample, model, criterion, optimizer, update_num, ignore_grad=False
-    ):
+    def train_step(self, sample, model, criterion, optimizer, update_num, ignore_grad=False):
         """
         Do forward and backward, and return the loss as computed by *criterion*
         for the given *model* and *sample*.
@@ -331,16 +329,11 @@ class GraphPredictionWithFlagTask(GraphPredictionTask):
         for _ in range(self.flag_m - 1):
             optimizer.backward(loss)
             total_loss += loss.detach()
-            perturb_data = perturb.detach() + self.flag_step_size * torch.sign(
-                perturb.grad.detach()
-            )
+            perturb_data = perturb.detach() + self.flag_step_size * torch.sign(perturb.grad.detach())
             if self.flag_mag > 0:
                 perturb_data_norm = torch.norm(perturb_data, dim=-1).detach()
                 exceed_mask = (perturb_data_norm > self.flag_mag).to(perturb_data)
-                reweights = (
-                    self.flag_mag / perturb_data_norm * exceed_mask
-                    + (1 - exceed_mask)
-                ).unsqueeze(-1)
+                reweights = (self.flag_mag / perturb_data_norm * exceed_mask + (1 - exceed_mask)).unsqueeze(-1)
                 perturb_data = (perturb_data * reweights).detach()
             perturb.data = perturb_data.data
             perturb.grad[:] = 0
