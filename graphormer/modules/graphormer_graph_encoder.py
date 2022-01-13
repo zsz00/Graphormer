@@ -74,9 +74,7 @@ class GraphormerGraphEncoder(nn.Module):
     ) -> None:
 
         super().__init__()
-        self.dropout_module = FairseqDropout(
-            dropout, module_name=self.__class__.__name__
-        )
+        self.dropout_module = FairseqDropout(dropout, module_name=self.__class__.__name__)
         self.layerdrop = layerdrop
         self.embedding_dim = embedding_dim
         self.apply_graphormer_init = apply_graphormer_init
@@ -137,7 +135,7 @@ class GraphormerGraphEncoder(nn.Module):
                     q_noise=q_noise,
                     qn_block_size=qn_block_size,
                 )
-                for _ in range(num_encoder_layers)
+                for _ in range(num_encoder_layers)   # 12
             ]
         )
 
@@ -192,7 +190,7 @@ class GraphormerGraphEncoder(nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         is_tpu = False
         # compute padding mask. This is needed for multi-head attention
-        data_x = batched_data["x"]
+        data_x = batched_data["x"]   # [n_graph, n_node, dim]
         n_graph, n_node = data_x.size()[:2]
         padding_mask = (data_x[:, :, 0]).eq(0)  # B x T x 1
         padding_mask_cls = torch.zeros(n_graph, 1, device=padding_mask.device, dtype=padding_mask.dtype)
@@ -224,12 +222,12 @@ class GraphormerGraphEncoder(nn.Module):
 
         x = self.dropout_module(x)
 
-        # account for padding while computing the representation
+        # account for padding while computing the representation/embedding
 
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
 
-        inner_states = []
+        inner_states = []   # 内部状态
         if not last_state_only:
             inner_states.append(x)
 
@@ -243,7 +241,7 @@ class GraphormerGraphEncoder(nn.Module):
             if not last_state_only:
                 inner_states.append(x)
 
-        graph_rep = x[0, :, :]
+        graph_rep = x[0, :, :]   # graph embedding
 
         if last_state_only:
             inner_states = [x]
@@ -251,4 +249,4 @@ class GraphormerGraphEncoder(nn.Module):
         if self.traceable:
             return torch.stack(inner_states), graph_rep
         else:
-            return inner_states, graph_rep
+            return inner_states, graph_rep    # 走的这个

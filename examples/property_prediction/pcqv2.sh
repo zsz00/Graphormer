@@ -22,3 +22,5 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 fairseq-train \
 --fp16 \
 --data-buffer-size 20 \
 --save-dir ./ckpts
+
+# cross_entropy

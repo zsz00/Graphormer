@@ -211,9 +211,7 @@ class GraphPredictionTask(FairseqTask):
         )
 
         if split == "train" and self.cfg.train_epoch_shuffle:
-            dataset = EpochShuffleDataset(
-                dataset, size=len(dataset), seed=self.cfg.seed
-            )
+            dataset = EpochShuffleDataset(dataset, size=len(dataset), seed=self.cfg.seed)
 
         logger.info("Loaded {0} with #samples: {1}".format(split, len(dataset)))
 
@@ -325,9 +323,7 @@ class GraphPredictionWithFlagTask(GraphPredictionTask):
         perturb.requires_grad_()
         sample["perturb"] = perturb
         with torch.cuda.amp.autocast(enabled=(isinstance(optimizer, AMPOptimizer))):
-            loss, sample_size, logging_output = criterion(
-                model, sample
-            )
+            loss, sample_size, logging_output = criterion(model, sample)
             if ignore_grad:
                 loss *= 0
         loss /= self.flag_m
@@ -350,9 +346,7 @@ class GraphPredictionWithFlagTask(GraphPredictionTask):
             perturb.grad[:] = 0
             sample["perturb"] = perturb
             with torch.cuda.amp.autocast(enabled=(isinstance(optimizer, AMPOptimizer))):
-                loss, sample_size, logging_output = criterion(
-                    model, sample
-                )
+                loss, sample_size, logging_output = criterion(model, sample)
                 if ignore_grad:
                     loss *= 0
             loss /= self.flag_m

@@ -18,9 +18,7 @@ from fairseq.models import (
     register_model,
     register_model_architecture,
 )
-from fairseq.modules import (
-    LayerNorm,
-)
+from fairseq.modules import LayerNorm
 from fairseq.utils import safe_hasattr
 
 from ..modules import init_graphormer_params, GraphormerGraphEncoder
@@ -175,31 +173,24 @@ class GraphormerEncoder(FairseqEncoder):
             activation_fn=args.activation_fn,
         )
 
-        self.share_input_output_embed = args.share_encoder_input_output_embed
+        self.share_input_output_embed = args.share_encoder_input_output_embed  # False
         self.embed_out = None
         self.lm_output_learned_bias = None
 
         # Remove head is set to true during fine-tuning
         self.load_softmax = not getattr(args, "remove_head", False)
 
-        self.masked_lm_pooler = nn.Linear(
-            args.encoder_embed_dim, args.encoder_embed_dim
-        )
+        self.masked_lm_pooler = nn.Linear(args.encoder_embed_dim, args.encoder_embed_dim)
 
-        self.lm_head_transform_weight = nn.Linear(
-            args.encoder_embed_dim, args.encoder_embed_dim
-        )
+        self.lm_head_transform_weight = nn.Linear(args.encoder_embed_dim, args.encoder_embed_dim)  # 768*768
         self.activation_fn = utils.get_activation_fn(args.activation_fn)
         self.layer_norm = LayerNorm(args.encoder_embed_dim)
 
         self.lm_output_learned_bias = None
         if self.load_softmax:
-            self.lm_output_learned_bias = nn.Parameter(torch.zeros(1))
-
+            self.lm_output_learned_bias = nn.Parameter(torch.zeros(1))  # 可学习的基本偏置数. 所有graph的此值都一样
             if not self.share_input_output_embed:
-                self.embed_out = nn.Linear(
-                    args.encoder_embed_dim, args.num_classes, bias=False
-                )
+                self.embed_out = nn.Linear(args.encoder_embed_dim, args.num_classes, bias=False)
             else:
                 raise NotImplementedError
 
@@ -209,24 +200,26 @@ class GraphormerEncoder(FairseqEncoder):
             self.embed_out.reset_parameters()
 
     def forward(self, batched_data, perturb=None, masked_tokens=None, **unused):
-        inner_states, graph_rep = self.graph_encoder(batched_data, perturb=perturb,)
-
-        x = inner_states[-1].transpose(0, 1)
-
+        inner_states, graph_rep = self.graph_encoder(batched_data, perturb=perturb,)    # 12 GraphormerGraphEncoder
+        data_x = batched_data["x"]  # [n_graph, n_node, dim]
+        print(f"{data_x.shape=}")  # [2, 17, 9]
+        print(f"{inner_states[-1].shape=}")  # [17, 2, 768]
+        x = inner_states[-1].transpose(0, 1)   # 取最后一层的node embedding. # [n_graph, n_node+1, encoder_embed_dim]
+        print(f"{x.shape=}")   # [2, 18, 768]
         # project masked tokens only
         if masked_tokens is not None:
             raise NotImplementedError
 
         x = self.layer_norm(self.activation_fn(self.lm_head_transform_weight(x)))
 
-        # project back to size of vocabulary
+        # project back to size of vocabulary 投射回词汇量的大小
         if self.share_input_output_embed and hasattr(self.graph_encoder.embed_tokens, "weight"):
             x = F.linear(x, self.graph_encoder.embed_tokens.weight)
         elif self.embed_out is not None:
-            x = self.embed_out(x)
+            x = self.embed_out(x)   # 走的这个.    [n_graph, encoder_embed_dim]*[encoder_embed_dim,num_classes]=[n_graph,num_classes]
         if self.lm_output_learned_bias is not None:
-            x = x + self.lm_output_learned_bias
-
+            x = x + self.lm_output_learned_bias  # 也走了
+        print(f"out:{x.shape=}\n{x[0,0:3,:]}")   # [2, 18, 1]
         return x
 
     def max_nodes(self):
@@ -285,21 +278,15 @@ def graphormer_base_architecture(args):
         args.act_dropout = getattr(args, "act_dropout", 0.1)
     else:
         args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
-
         args.encoder_layers = getattr(args, "encoder_layers", 12)
-
         args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 32)
         args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 768)
 
     args.activation_fn = getattr(args, "activation_fn", "gelu")
     args.encoder_normalize_before = getattr(args, "encoder_normalize_before", True)
     args.apply_graphormer_init = getattr(args, "apply_graphormer_init", True)
-    args.share_encoder_input_output_embed = getattr(
-            args, "share_encoder_input_output_embed", False
-        )
-    args.no_token_positional_embeddings = getattr(
-        args, "no_token_positional_embeddings", False
-    )
+    args.share_encoder_input_output_embed = getattr(args, "share_encoder_input_output_embed", False)
+    args.no_token_positional_embeddings = getattr(args, "no_token_positional_embeddings", False)
     base_architecture(args)
 
 

@@ -45,7 +45,7 @@ class MultiheadAttention(nn.Module):
             dropout, module_name=self.__class__.__name__
         )
 
-        self.head_dim = embed_dim // num_heads
+        self.head_dim = embed_dim // num_heads   # 24 = 768 // 32
         assert (
                 self.head_dim * num_heads == self.embed_dim
         ), "embed_dim must be divisible by num_heads"
@@ -203,9 +203,10 @@ class MultiheadAttention(nn.Module):
 
         assert v is not None
         attn = torch.bmm(attn_probs, v)
+        print(f"attn:{attn.shape=}")    # [64, 18, 24]  [bsz * num_heads, n_node+1, head_dim], 每个head的dim是24
         assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]
 
-        attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
+        attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)  # [18, 2, 768]
         attn = self.out_proj(attn)
 
         attn_weights: Optional[Tensor] = None

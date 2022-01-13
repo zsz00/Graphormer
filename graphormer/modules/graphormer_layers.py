@@ -7,7 +7,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-
 import torch
 import torch.nn as nn
 
@@ -26,9 +25,7 @@ class GraphNodeFeature(nn.Module):
     Compute node features for each node in the graph.
     """
 
-    def __init__(
-        self, num_heads, num_atoms, num_in_degree, num_out_degree, hidden_dim, n_layers
-    ):
+    def __init__(self, num_heads, num_atoms, num_in_degree, num_out_degree, hidden_dim, n_layers):
         super(GraphNodeFeature, self).__init__()
         self.num_heads = num_heads
         self.num_atoms = num_atoms
@@ -36,9 +33,7 @@ class GraphNodeFeature(nn.Module):
         # 1 for graph token
         self.atom_encoder = nn.Embedding(num_atoms + 1, hidden_dim, padding_idx=0)
         self.in_degree_encoder = nn.Embedding(num_in_degree, hidden_dim, padding_idx=0)
-        self.out_degree_encoder = nn.Embedding(
-            num_out_degree, hidden_dim, padding_idx=0
-        )
+        self.out_degree_encoder = nn.Embedding(num_out_degree, hidden_dim, padding_idx=0)
 
         self.graph_token = nn.Embedding(1, hidden_dim)
 
@@ -52,7 +47,7 @@ class GraphNodeFeature(nn.Module):
         )
         n_graph, n_node = x.size()[:2]
 
-        # node feature + graph token
+        # node feature
         node_feature = self.atom_encoder(x).sum(dim=-2)  # [n_graph, n_node, n_hidden]
 
         # if self.flag and perturb is not None:
@@ -63,10 +58,10 @@ class GraphNodeFeature(nn.Module):
             + self.in_degree_encoder(in_degree)
             + self.out_degree_encoder(out_degree)
         )
+        # graph token
+        graph_token_feature = self.graph_token.weight.unsqueeze(0).repeat(n_graph, 1, 1)  # [n_graph, 1, n_hidden]
 
-        graph_token_feature = self.graph_token.weight.unsqueeze(0).repeat(n_graph, 1, 1)
-
-        graph_node_feature = torch.cat([graph_token_feature, node_feature], dim=1)
+        graph_node_feature = torch.cat([graph_token_feature, node_feature], dim=1)  # [n_graph, n_node+1, n_hidden]
 
         return graph_node_feature
 
@@ -91,13 +86,12 @@ class GraphAttnBias(nn.Module):
         super(GraphAttnBias, self).__init__()
         self.num_heads = num_heads
         self.multi_hop_max_dist = multi_hop_max_dist
-
-        self.edge_encoder = nn.Embedding(num_edges + 1, num_heads, padding_idx=0)
+        # 边信息编码
+        self.edge_encoder = nn.Embedding(num_edges + 1, num_heads, padding_idx=0)   # [num_edges+1, num_heads]
         self.edge_type = edge_type
-        if self.edge_type == "multi_hop":
-            self.edge_dis_encoder = nn.Embedding(
-                num_edge_dis * num_heads * num_heads, 1
-            )
+        if self.edge_type == "multi_hop":   # 多跳
+            self.edge_dis_encoder = nn.Embedding(num_edge_dis * num_heads * num_heads, 1)
+        # 空间编码
         self.spatial_pos_encoder = nn.Embedding(num_spatial, num_heads, padding_idx=0)
 
         self.graph_token_virtual_distance = nn.Embedding(1, num_heads)
@@ -111,24 +105,19 @@ class GraphAttnBias(nn.Module):
             batched_data["x"],
         )
         # in_degree, out_degree = batched_data.in_degree, batched_data.in_degree
-        edge_input, attn_edge_type = (
-            batched_data["edge_input"],
-            batched_data["attn_edge_type"],
-        )
+        edge_input, attn_edge_type = (batched_data["edge_input"], batched_data["attn_edge_type"],)
 
         n_graph, n_node = x.size()[:2]
         graph_attn_bias = attn_bias.clone()
-        graph_attn_bias = graph_attn_bias.unsqueeze(1).repeat(
-            1, self.num_heads, 1, 1
-        )  # [n_graph, n_head, n_node+1, n_node+1]
+        graph_attn_bias = graph_attn_bias.unsqueeze(1).repeat(1, self.num_heads, 1, 1)  # [n_graph, n_head, n_node+1, n_node+1]
 
         # spatial pos
-        # [n_graph, n_node, n_node, n_head] -> [n_graph, n_head, n_node, n_node]
+        # [n_graph, n_node, n_node, n_head] * [n_node, num_heads] -> [n_graph, n_head, n_node, n_node]
         spatial_pos_bias = self.spatial_pos_encoder(spatial_pos).permute(0, 3, 1, 2)
         graph_attn_bias[:, :, 1:, 1:] = graph_attn_bias[:, :, 1:, 1:] + spatial_pos_bias
 
         # reset spatial pos here
-        t = self.graph_token_virtual_distance.weight.view(1, self.num_heads, 1)
+        t = self.graph_token_virtual_distance.weight.view(1, self.num_heads, 1)   # [1, num_heads, 1]
         graph_attn_bias[:, :, 1:, 0] = graph_attn_bias[:, :, 1:, 0] + t
         graph_attn_bias[:, :, 0, :] = graph_attn_bias[:, :, 0, :] + t
 
@@ -144,21 +133,13 @@ class GraphAttnBias(nn.Module):
             # [n_graph, n_node, n_node, max_dist, n_head]
             edge_input = self.edge_encoder(edge_input).mean(-2)
             max_dist = edge_input.size(-2)
-            edge_input_flat = edge_input.permute(3, 0, 1, 2, 4).reshape(
-                max_dist, -1, self.num_heads
-            )
+            edge_input_flat = edge_input.permute(3, 0, 1, 2, 4).reshape(max_dist, -1, self.num_heads)
             edge_input_flat = torch.bmm(
                 edge_input_flat,
-                self.edge_dis_encoder.weight.reshape(
-                    -1, self.num_heads, self.num_heads
-                )[:max_dist, :, :],
+                self.edge_dis_encoder.weight.reshape(-1, self.num_heads, self.num_heads)[:max_dist, :, :],
             )
-            edge_input = edge_input_flat.reshape(
-                max_dist, n_graph, n_node, n_node, self.num_heads
-            ).permute(1, 2, 3, 0, 4)
-            edge_input = (
-                edge_input.sum(-2) / (spatial_pos_.float().unsqueeze(-1))
-            ).permute(0, 3, 1, 2)
+            edge_input = edge_input_flat.reshape(max_dist, n_graph, n_node, n_node, self.num_heads).permute(1, 2, 3, 0, 4)
+            edge_input = (edge_input.sum(-2) / (spatial_pos_.float().unsqueeze(-1))).permute(0, 3, 1, 2)
         else:
             # [n_graph, n_node, n_node, n_head] -> [n_graph, n_head, n_node, n_node]
             edge_input = self.edge_encoder(attn_edge_type).mean(-2).permute(0, 3, 1, 2)

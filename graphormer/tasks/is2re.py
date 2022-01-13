@@ -22,6 +22,7 @@ from fairseq.tasks import FairseqTask, register_task
 
 from ..data.dataset import EpochShuffleDataset
 
+
 class LMDBDataset:
     def __init__(self, db_path):
         super().__init__()

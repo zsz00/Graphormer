@@ -3,9 +3,15 @@
 1. 部署环境, 跑通 examples/property_prediction/pcqv2.sh
 2. 训练,复现了论文结果
 
+train | epoch 450 | loss 0.034901
+'valid' subset | loss 0.094522
 
+train | epoch 451 | loss 0.035043
+valid' subset | loss 0.09447
 
-
+2022.01.11
+加人脸数据训练
+ogb_dataset
 
 
 
