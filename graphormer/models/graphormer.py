@@ -248,12 +248,8 @@ def base_architecture(args):
     args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 8)
 
     args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 1024)
-    args.share_encoder_input_output_embed = getattr(
-        args, "share_encoder_input_output_embed", False
-    )
-    args.no_token_positional_embeddings = getattr(
-        args, "no_token_positional_embeddings", False
-    )
+    args.share_encoder_input_output_embed = getattr(args, "share_encoder_input_output_embed", False)
+    args.no_token_positional_embeddings = getattr(args, "no_token_positional_embeddings", False)
 
     args.apply_graphormer_init = getattr(args, "apply_graphormer_init", False)
 
@@ -282,7 +278,7 @@ def graphormer_base_architecture(args):
     else:
         args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
         args.encoder_layers = getattr(args, "encoder_layers", 12)
-        args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 32)
+        args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 2)  # 32
         args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 768)
 
     args.activation_fn = getattr(args, "activation_fn", "gelu")

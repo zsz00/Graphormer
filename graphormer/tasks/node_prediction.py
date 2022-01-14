@@ -34,6 +34,7 @@ from fairseq.optim.amp_optimizer import AMPOptimizer
 import math
 
 from ..data import DATASET_REGISTRY
+from ..data.customized_dataset.cluster_dataset_1 import cluster_dataset_1
 import sys
 import os
 
@@ -130,8 +131,8 @@ class GraphPredictionConfig(FairseqDataclass):
     )
 
 
-@register_task("graph_prediction", dataclass=GraphPredictionConfig)
-class GraphPredictionTask(FairseqTask):
+@register_task("node_prediction", dataclass=GraphPredictionConfig)
+class NodePredictionTask(FairseqTask):
     """
     Graph prediction (classification or regression) task.
     """
@@ -139,9 +140,12 @@ class GraphPredictionTask(FairseqTask):
     def __init__(self, cfg):
         super().__init__(cfg)
         if cfg.user_data_dir != "":
-            self.__import_user_defined_datasets(cfg.user_data_dir)
+            print(f"==============:{DATASET_REGISTRY=}")
+            # self.__import_user_defined_datasets(cfg.user_data_dir)
+            DATASET_REGISTRY = {"cluster_dataset_1": ""}
             if cfg.dataset_name in DATASET_REGISTRY:
-                dataset_dict = DATASET_REGISTRY[cfg.dataset_name]
+                # dataset_dict = DATASET_REGISTRY[cfg.dataset_name]
+                dataset_dict = cluster_dataset_1()
                 self.dm = GraphormerDataset(
                     dataset=dataset_dict["dataset"],
                     dataset_source=dataset_dict["source"],
@@ -159,12 +163,14 @@ class GraphPredictionTask(FairseqTask):
             )
 
     def __import_user_defined_datasets(self, dataset_dir):
-        dataset_dir = dataset_dir.strip("/")
+        # dataset_dir = dataset_dir.strip("/")
         module_parent, module_name = os.path.split(dataset_dir)
         sys.path.insert(0, module_parent)
+        print(module_parent, module_name)
         importlib.import_module(module_name)
         for file in os.listdir(dataset_dir):
             path = os.path.join(dataset_dir, file)
+            print(path)
             if (
                 not file.startswith("_")
                 and not file.startswith(".")
@@ -182,7 +188,7 @@ class GraphPredictionTask(FairseqTask):
         """Load a given dataset split (e.g., train, valid, test)."""
 
         assert split in ["train", "valid", "test"]
-        print(f"=============:{DATASET_REGISTRY=}")
+
         if split == "train":
             batched_data = self.dm.dataset_train
         elif split == "valid":
@@ -266,8 +272,8 @@ class GraphPredictionWithFlagConfig(GraphPredictionConfig):
     )
 
 
-@register_task("graph_prediction_with_flag", dataclass=GraphPredictionWithFlagConfig)
-class GraphPredictionWithFlagTask(GraphPredictionTask):
+@register_task("node_prediction_with_flag", dataclass=GraphPredictionWithFlagConfig)
+class NodePredictionWithFlagTask(NodePredictionTask):
     """
     Graph prediction (classification or regression) task.
     """
