@@ -65,7 +65,7 @@ def read_csv_graph_raw(raw_dir, add_inverse_edge=False, additional_node_files=[]
 
     try:
         # adding prediction target, gt/label
-        node_label = pd.read_csv(osp.join(self.raw_dir, 'node-label.csv.gz'), compression='gzip', header=None).values
+        node_label = pd.read_csv(osp.join(raw_dir, 'node-label.csv.gz'), compression='gzip', header=None).values
         node_label = node_label.astype(np.int64)
     except FileNotFoundError:
         node_label = None

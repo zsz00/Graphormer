@@ -3,7 +3,7 @@
 # Licensed under the MIT License.
 
 ulimit -c unlimited
-
+# cd ~/codes/Graphormer/examples/property_prediction
 CUDA_VISIBLE_DEVICES=4,5,6,7 fairseq-train \
 --user-dir ../../graphormer \
 --num-workers 16 \

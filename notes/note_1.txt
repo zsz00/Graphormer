@@ -10,13 +10,40 @@ train | epoch 451 | loss 0.035043
 valid' subset | loss 0.09447
 
 2022.01.11
-加人脸数据训练
+加人脸数据训练. 数据集生成是 gcn_torch.examples/sage/cluster_knn.py
 ogb_dataset
 
+CUDA_VISIBLE_DEVICES=3 fairseq-train \
+--user-dir ../../graphormer \
+--num-workers 16 \
+--ddp-backend=legacy_ddp \
+--dataset-name pcqm4mv2 \
+--dataset-source ogb \
+--task graph_prediction \
+--criterion l1_loss \
+--arch graphormer_base \
+--num-classes 1 \
+--attention-dropout 0.1 --act-dropout 0.1 --dropout 0.0 \
+--optimizer adam --adam-betas '(0.9, 0.999)' --adam-eps 1e-8 --clip-norm 5.0 --weight-decay 0.0 \
+--lr-scheduler polynomial_decay --power 1 --warmup-updates 60000 --total-num-update 1000000 \
+--lr 2e-4 --end-learning-rate 1e-9 \
+--batch-size 2 \
+--fp16 \
+--data-buffer-size 20 \
+--save-dir ./ckpts
 
 
+2022.01.20
+改任务为节点分类
+examples/cluster/node_cls.sh
 
 
+graphormer/tasks/graph_prediction.py -> graphormer/data/dataset.py -> graphormer/data/pyg_datasets/pyg_dataset.py --> graphormer/data/wrapper_2.py
+GraphPredictionTask().GraphormerDataset() -> dataset.GraphormerDataset() ->  GraphormerPYGDataset().__getitem__() --> wrapper_2.preprocess_item() -> item
+
+GraphPredictionTask().load_dataset.BatchedDataDataset() -> dataset.BatchedDataDataset().collater() -> collator.py.collator() -> dataset
+
+wrapper_2.preprocess_item() -> collator.collator() -> graphormer_layers.py.GraphNodeFeature(),GraphAttnBias()
 
 
 

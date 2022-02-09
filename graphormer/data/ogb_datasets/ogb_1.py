@@ -176,10 +176,10 @@ class PygNodePropPredDataset(InMemoryDataset):
 
         # double-check prediction target   只是检查
         split_dict = self.get_idx_split()
-        self.split_dict = split_dict
-        assert (all([not torch.isnan(data_list[i].y)[0] for i in split_dict['train']]))
-        assert (all([not torch.isnan(data_list[i].y)[0] for i in split_dict['valid']]))
-        assert (all([torch.isnan(data_list[i].y)[0] for i in split_dict['test']]))
+        print(f"{len(data_list)=}, {split_dict['train']=}")
+        # assert (all([not torch.isnan(data_list[i].y)[0] for i in split_dict['train']]))
+        # assert (all([not torch.isnan(data_list[i].y)[0] for i in split_dict['valid']]))
+        # assert (all([torch.isnan(data_list[i].y)[0] for i in split_dict['test']]))
 
         if self.pre_transform is not None:
             data_list = [self.pre_transform(data) for data in data_list]

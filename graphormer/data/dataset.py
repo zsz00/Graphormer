@@ -7,7 +7,7 @@ from torch.nn import functional as F
 from fairseq.data import data_utils, FairseqDataset, BaseWrapperDataset
 
 from .wrapper import MyPygGraphPropPredDataset
-from .collator import collator
+from .collator import collator, pad_1d_unsqueeze
 
 from typing import Optional, Union
 from torch_geometric.data import Data as PYGDataset
@@ -33,12 +33,13 @@ class BatchedDataDataset(FairseqDataset):
         return len(self.dataset)
 
     def collater(self, samples):
-        return collator(
+        collator_out = collator(
             samples,
             max_node=self.max_node,
             multi_hop_max_dist=self.multi_hop_max_dist,
             spatial_pos_max=self.spatial_pos_max,
         )
+        return collator_out
 
 
 class TargetDataset(FairseqDataset):
@@ -53,8 +54,13 @@ class TargetDataset(FairseqDataset):
     def __len__(self):
         return len(self.dataset)
 
-    def collater(self, samples):
-        return torch.stack(samples, dim=0)
+    def collater(self, samples):    # samples是__getitem__的输出
+        # print(f"===TargetDataset=={samples[0].shape=}, {samples[1].shape=}")
+        max_node_num = max(i.size(0) for i in samples)
+        samples = torch.cat([pad_1d_unsqueeze(i, max_node_num) for i in samples])
+        print(f"===TargetDataset=={samples[0].shape=}, {samples[1].shape=}, {samples.shape=}")
+        # samples = torch.stack(samples, dim=0)
+        return samples
 
 
 class GraphormerDataset:

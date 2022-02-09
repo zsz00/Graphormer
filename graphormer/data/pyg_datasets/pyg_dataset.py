@@ -7,7 +7,7 @@ from typing import List
 import torch
 import numpy as np
 
-from ..wrapper import preprocess_item
+from ..wrapper_2 import preprocess_item
 from .. import algos
 
 import copy
@@ -98,7 +98,8 @@ class GraphormerPYGDataset(Dataset):
             item = self.dataset[idx]
             item.idx = idx
             item.y = item.y.reshape(-1)
-            return preprocess_item(item)
+            item = preprocess_item(item)
+            return item
         else:
             raise TypeError("index to a GraphormerPYGDataset can only be an integer.")
 

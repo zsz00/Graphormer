@@ -6,6 +6,7 @@ from cython.parallel cimport prange, parallel
 cimport numpy
 import numpy
 
+
 def floyd_warshall(adjacency_matrix):
 
     (nrows, ncols) = adjacency_matrix.shape
@@ -70,7 +71,8 @@ def gen_edge_input(max_dist, path, edge_feat):
     cdef unsigned int max_dist_copy = max_dist
 
     path_copy = path.astype(long, order='C', casting='safe', copy=True)
-    edge_feat_copy = edge_feat.astype(long, order='C', casting='safe', copy=True)
+    # edge_feat_copy = edge_feat.astype(long, order='C', casting='safe', copy=True)
+    edge_feat_copy = edge_feat.astype(float, order='C', casting='safe', copy=True)
     assert path_copy.flags['C_CONTIGUOUS']
     assert edge_feat_copy.flags['C_CONTIGUOUS']
 

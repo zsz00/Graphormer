@@ -131,7 +131,7 @@ class GraphormerGraphEncoderLayer(nn.Module):
         x = self.dropout_module(x)
         x = residual + x
         x = self.self_attn_layer_norm(x)
-        print(f"encoder: {x.shape=}, {residual.shape=}, ")  # {attn.shape=}   18, 2, 768
+        # print(f"encoder: {x.shape=}, {residual.shape=}, ")  # {attn.shape=}   18, 2, 768
         residual = x
         x = self.activation_fn(self.fc1(x))
         x = self.activation_dropout_module(x)

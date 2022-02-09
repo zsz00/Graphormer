@@ -202,12 +202,14 @@ class GraphormerEncoder(FairseqEncoder):
     def forward(self, batched_data, perturb=None, masked_tokens=None, **unused):
         inner_states, graph_rep = self.graph_encoder(batched_data, perturb=perturb,)    # 12 GraphormerGraphEncoder
         data_x = batched_data["x"]  # [n_graph, n_node, dim]
+        print('GraphormerEncoder.forward =============================')
         print(f"{data_x.shape=}")  # [2, 17, 9]
         print(f"{inner_states[-1].shape=}")  # [17, 2, 768]
         data_y = batched_data["y"]
-        print(f"data_y:{data_y}")
+        print(f"{data_y=}")
         x = inner_states[-1].transpose(0, 1)   # 取最后一层的node embedding. # [n_graph, n_node+1, encoder_embed_dim]
         print(f"{x.shape=}")   # [2, 18, 768]
+        print('============================================================================')
         # project masked tokens only
         if masked_tokens is not None:
             raise NotImplementedError
@@ -222,7 +224,7 @@ class GraphormerEncoder(FairseqEncoder):
             x = self.embed_out(x)   # 走的这个.    [n_graph, encoder_embed_dim]*[encoder_embed_dim,num_classes]=[n_graph,num_classes]
         if self.lm_output_learned_bias is not None:
             x = x + self.lm_output_learned_bias  # 也走了
-        # print(f"out:{x.shape=}\n{x[0,0:3,:]}")   # [2, 18, 1]
+        print(f"out:{x.shape=}\n{x[0,0:3,:]}")   # [2, 18, 1]
         return x
 
     def max_nodes(self):

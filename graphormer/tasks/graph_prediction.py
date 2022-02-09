@@ -196,7 +196,8 @@ class GraphPredictionTask(FairseqTask):
             multi_hop_max_dist=self.cfg.multi_hop_max_dist,
             spatial_pos_max=self.cfg.spatial_pos_max,
         )
-
+        if len(batched_data) > 1:
+            print(f"====={len(batched_data[0])=}, {len(batched_data[1])=}")
         data_sizes = np.array([self.max_nodes()] * len(batched_data))
 
         target = TargetDataset(batched_data)

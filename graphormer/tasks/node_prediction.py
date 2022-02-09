@@ -1,10 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+# 自己基于graph_prediction.py改的
 
-# Copyright (c) Facebook, Inc. and its affiliates.
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
 import logging
 
@@ -34,7 +31,7 @@ from fairseq.optim.amp_optimizer import AMPOptimizer
 import math
 
 from ..data import DATASET_REGISTRY
-from ..data.customized_dataset.cluster_dataset_1 import cluster_dataset_1
+from ..data.customized_dataset import cluster_dataset_1
 import sys
 import os
 
@@ -140,12 +137,12 @@ class NodePredictionTask(FairseqTask):
     def __init__(self, cfg):
         super().__init__(cfg)
         if cfg.user_data_dir != "":
-            print(f"==============:{DATASET_REGISTRY=}")
+            # print(f"==============:{DATASET_REGISTRY=}")
             # self.__import_user_defined_datasets(cfg.user_data_dir)
             DATASET_REGISTRY = {"cluster_dataset_1": ""}
             if cfg.dataset_name in DATASET_REGISTRY:
                 # dataset_dict = DATASET_REGISTRY[cfg.dataset_name]
-                dataset_dict = cluster_dataset_1()
+                dataset_dict = cluster_dataset_1.cluster_dataset_1()
                 self.dm = GraphormerDataset(
                     dataset=dataset_dict["dataset"],
                     dataset_source=dataset_dict["source"],
@@ -195,17 +192,21 @@ class NodePredictionTask(FairseqTask):
             batched_data = self.dm.dataset_val
         elif split == "test":
             batched_data = self.dm.dataset_test
-
+        print("=============")
+        print(f"{split=}, {len(batched_data)=}")
+        # 会做一个batch里的pad补齐
         batched_data = BatchedDataDataset(
             batched_data,
             max_node=self.max_nodes(),
             multi_hop_max_dist=self.cfg.multi_hop_max_dist,
             spatial_pos_max=self.cfg.spatial_pos_max,
         )
-
+        print(f"{len(batched_data)=}")
+        if len(batched_data) > 1:
+            print(f"====={len(batched_data[3])=}, {len(batched_data[4])=}")
         data_sizes = np.array([self.max_nodes()] * len(batched_data))
-
-        target = TargetDataset(batched_data)
+        # print(f"{data_sizes=}, {self.max_nodes()=}, {len(batched_data)=}")
+        target = TargetDataset(batched_data)  # gt的处理
 
         dataset = NestedDictionaryDataset(
             {
@@ -215,7 +216,7 @@ class NodePredictionTask(FairseqTask):
             },
             sizes=data_sizes,
         )
-
+        print(f"{dataset=}")
         if split == "train" and self.cfg.train_epoch_shuffle:
             dataset = EpochShuffleDataset(dataset, size=len(dataset), seed=self.cfg.seed)
 

@@ -16,7 +16,9 @@ from . import algos
 @torch.jit.script
 def convert_to_single_emb(x, offset: int = 512):
     feature_num = x.size(1) if len(x.size()) > 1 else 1
-    feature_offset = 1 + torch.arange(0, feature_num * offset, offset, dtype=torch.long)
+    # feature_offset = 1 + torch.arange(0, feature_num * offset, offset, dtype=torch.long)
+    feature_offset = 1 + torch.arange(0, feature_num * offset, offset, dtype=torch.float)
+    # 1, 512+1, 2*512+1, 3*512+1, 4*512+1,..., 384*512+1
     x = x + feature_offset
     return x
 
@@ -25,7 +27,8 @@ def preprocess_item(item):
     edge_attr, edge_index, x = item.edge_attr, item.edge_index, item.x
     N = x.size(0)
     print(f"{x.shape=}, {x.size(0)=}, {edge_index.shape=}, {edge_attr[:1]=}")
-    x = convert_to_single_emb(x)
+    # x = convert_to_single_emb(x)   # 有啥用?
+    # print(f"{x.shape=}, {x[:,0:10]=}")   # [4, 384], 4
 
     # node adj matrix [N, N] bool
     adj = torch.zeros([N, N], dtype=torch.bool)
@@ -36,22 +39,27 @@ def preprocess_item(item):
         edge_attr = edge_attr[:, None]
 
     # edge_attr = (1.0 / edge_attr * 1000).long()  # 边属性 要是整数, 表示聚类
-    attn_edge_type = torch.zeros([N, N, edge_attr.size(-1)], dtype=torch.long)
-    attn_edge_type[edge_index[0, :], edge_index[1, :]] = (convert_to_single_emb(edge_attr) + 1)
+    # attn_edge_type = torch.zeros([N, N, edge_attr.size(-1)], dtype=torch.long)
+    attn_edge_type = torch.zeros([N, N, edge_attr.size(-1)], dtype=torch.float)  # 边属性为float
+    # attn_edge_type[edge_index[0, :], edge_index[1, :]] = (convert_to_single_emb(edge_attr) + 1)
+    attn_edge_type[edge_index[0, :], edge_index[1, :]] = edge_attr
 
-    shortest_path_result, path = algos.floyd_warshall(adj.numpy())
+    # 下边的spatial_pos和edge_input计算,很任务耦合
+    shortest_path_result, path = algos.floyd_warshall(adj.numpy())  # 最短路径   (4, 4), (4, 4)
     max_dist = np.amax(shortest_path_result)
-    edge_input = algos.gen_edge_input(max_dist, path, attn_edge_type.numpy())
-    spatial_pos = torch.from_numpy((shortest_path_result)).long()
-    attn_bias = torch.zeros([N + 1, N + 1], dtype=torch.float)  # with graph token
+    print(f"{max_dist.shape=}, {path.shape=}")
+    edge_input = algos.gen_edge_input(max_dist, path, attn_edge_type.numpy())   # 边编码, 两个节点最短路径上的连边的特征进行加权求和
+    spatial_pos = torch.from_numpy((shortest_path_result)).long()   # 空间编码, 最短距离矩阵
+
+    attn_bias = torch.zeros([N + 1, N + 1], dtype=torch.float)  # with graph token. 初始化.
 
     # combine
     item.x = x
     item.attn_bias = attn_bias
-    item.attn_edge_type = attn_edge_type
+    item.attn_edge_type = attn_edge_type   # 边属性
     item.spatial_pos = spatial_pos
     item.in_degree = adj.long().sum(dim=1).view(-1)
-    item.out_degree = item.in_degree  # for undirected graph
+    item.out_degree = item.in_degree  # for undirected graph, 对于无向图
     item.edge_input = torch.from_numpy(edge_input).long()
 
     return item
